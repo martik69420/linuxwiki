@@ -27,4 +27,4 @@ Website
 ![Website-Image1](/images/Website-Image.png)
 
 Link
-[Test the website here!!!](https://martik69420.github.io/Rlinuxwiki/)
+[Test the website here!!!](https://martik69420.github.io/linuxwiki/)
