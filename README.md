@@ -25,6 +25,7 @@ Code
 
 Website
 ![Website-Image1](/images/Website-Image.png)
+![Website-Image1](/images/Website-Image2.png)
 
 Link
 [Test the website here!!!](https://martik69420.github.io/linuxwiki/)
