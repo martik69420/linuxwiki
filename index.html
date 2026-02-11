@@ -3,21 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
     <title>Anything Linux</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <header>
         <h1>Anything Linux</h1>
+        <div id="toolbar">
+            <button id="page-edit-btn" style="display:none;">Edit</button>
+            <button id="page-reset-btn" style="display:none;">Reset</button>
+        </div>
+    </header>
+
     <main>
-        <aside>
-            <input type="text" placeholder="Search something... ">
-            <ul id="command-list"></ul>
+        <aside id="sidebar">
+            <div id="search-add">
+                <input type="text" placeholder="Search commands..." id="search-input">
+                <button id="command-add-btn">Add Article</button>
+            </div>
+
+            <section id="categories-section">
+                <h3>Categories</h3>
+                <ul id="category-list"></ul>
+            </section>
+
+            <section id="commands-section">
+                <h3>Commands</h3>
+                <ul id="command-list"></ul>
+            </section>
         </aside>
 
         <section id="command-detail">
             <p>Select a command from the sidebar to see details.</p>
         </section>
     </main>
+
+    <!-- Add Article Modal -->
+    <div id="add-article-modal" class="modal">
+        <div class="modal-content">
+            <h3>Add New Article</h3>
+            <input type="text" id="new-name" placeholder="Command Name">
+            <input type="text" id="new-category" placeholder="Category">
+            <textarea id="new-description" placeholder="Description"></textarea>
+            <input type="text" id="new-syntax" placeholder="Syntax">
+            <input type="text" id="new-examples" placeholder="Examples (comma separated)">
+            <input type="text" id="new-errors" placeholder="Common Errors (comma separated)">
+            <input type="text" id="new-tips" placeholder="Tips (comma separated)">
+            <input type="text" id="new-related" placeholder="Related Commands (comma separated)">
+            <div class="modal-buttons">
+                <button id="modal-cancel-btn">Cancel</button>
+                <button id="modal-save-btn">Save</button>
+            </div>
+        </div>
+    </div>
 
     <script src="script.js"></script>
 </body>
