@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const defaultCommands = [
     {
       name: "ls",
-      category: "Filesystem",
+      category: "Undefined",
       description: "Lists files and directories in the current or specified path.",
       syntax: "ls [options] [path]",
       examples: ["ls -lah", "ls /var/log", "ls -R"],
