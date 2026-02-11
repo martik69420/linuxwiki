@@ -3,27 +3,30 @@ const STORAGE_KEY = "linux_wiki_commands";
 const defaultCommands = [
   {
     name: "ls",
+    category: "Filesystem",
     description: "Lists files and directories in the current or specified path.",
     syntax: "ls [options] [path]",
     examples: ["ls -lah", "ls /var/log", "ls -R"],
     commonErrors: ["Forgetting -h with -l", "Using ls without quotes for filenames with spaces"],
-    tips: ["Use ls --color=auto for colored output", "Combine with grep to filter results: ls | grep 'pattern'"],
-    related: ["cd", "pwd", "tree"],
-    images: ["images/ls-output.png"]
+    tips: ["Use ls --color=auto for colored output", "Combine with grep: ls | grep pattern"],
+    related: ["cd", "pwd"],
+    images: []
   },
   {
     name: "cd",
-    description: "Changes the current directory to the specified path.",
+    category: "Filesystem",
+    description: "Changes the current directory.",
     syntax: "cd [directory]",
-    examples: ["cd /home/user", "cd .."],
-    commonErrors: ["Using cd without specifying directory", "Not handling spaces in directory names"],
-    tips: ["Use cd ~ to go to home directory", "Use cd - to return to previous directory"],
+    examples: ["cd /home/user", "cd ..", "cd ~"],
+    commonErrors: ["Not quoting paths with spaces"],
+    tips: ["cd - returns to previous directory"],
     related: ["pwd", "ls"],
     images: []
   },
   {
     name: "pwd",
-    description: "Prints the current working directory path.",
+    category: "Filesystem",
+    description: "Prints the current working directory.",
     syntax: "pwd",
     examples: ["pwd"],
     commonErrors: [],
@@ -50,65 +53,102 @@ function saveCommands() {
 const commands = loadCommands();
 
 const list = document.getElementById("command-list");
-const searchInput = document.querySelector("input");
+const searchInput = document.querySelector("aside input");
 const detailDiv = document.getElementById("command-detail");
+const categoryList = document.getElementById("category-list");
+const editBtn = document.getElementById("page-edit-btn");
+const resetBtn = document.getElementById("page-reset-btn");
+const addBtn = document.getElementById("command-add-btn");
+const modal = document.getElementById("add-article-modal");
+const modalSave = document.getElementById("modal-save-btn");
+const modalCancel = document.getElementById("modal-cancel-btn");
+
+// hide buttons by default
+editBtn.style.display = "none";
+resetBtn.style.display = "none";
+
+let activeCategory = "All";
+let currentCommand = null;
+let editing = false;
+
+function renderCategories() {
+  const categories = ["All", ...new Set(commands.map(c => c.category).filter(Boolean))];
+  categoryList.innerHTML = "";
+  categories.forEach(cat => {
+    const li = document.createElement("li");
+    li.textContent = cat;
+    li.style.cursor = "pointer";
+    if (cat === activeCategory) li.style.fontWeight = "bold";
+    li.onclick = () => {
+      activeCategory = cat;
+      renderCategories();
+      renderFiltered();
+    };
+    categoryList.appendChild(li);
+  });
+}
+
+function renderFiltered() {
+  const q = searchInput.value.toLowerCase();
+  const filtered = commands.filter(cmd => {
+    const matchesSearch = cmd.name.toLowerCase().includes(q) || cmd.description.toLowerCase().includes(q);
+    const matchesCategory = activeCategory === "All" || cmd.category === activeCategory;
+    return matchesSearch && matchesCategory;
+  });
+  render(filtered, q);
+}
 
 function render(items, query = "") {
   list.innerHTML = "";
   items.forEach(cmd => {
     const li = document.createElement("li");
     li.style.cursor = "pointer";
-
     if (query) {
       const regex = new RegExp(`(${query})`, "gi");
-      li.innerHTML =
-        cmd.name.replace(regex, "<mark>$1</mark>") +
-        " — " +
-        cmd.description.replace(regex, "<mark>$1</mark>");
+      li.innerHTML = cmd.name.replace(regex, "<mark>$1</mark>") + " — " + cmd.description.replace(regex, "<mark>$1</mark>");
     } else {
       li.textContent = `${cmd.name} — ${cmd.description}`;
     }
-
     li.onclick = () => showDetails(cmd);
     list.appendChild(li);
   });
 }
 
 function showDetails(cmd) {
+  currentCommand = cmd;
+  editing = false;
+
+  // only show edit button when a command is selected
+  editBtn.style.display = "inline-block";
+  editBtn.textContent = "Edit";
+
+  // reset button hidden unless editing
+  resetBtn.style.display = "none";
+
   detailDiv.innerHTML = `
     <div class="card" data-section="description">
       <h2>${cmd.name}</h2>
       <p class="editable">${cmd.description}</p>
     </div>
-
     <div class="card" data-section="syntax">
       <h3>Syntax</h3>
       <pre class="editable">${cmd.syntax}</pre>
     </div>
-
     <div class="card" data-section="examples">
-      <h3>Examples / Use Cases</h3>
+      <h3>Examples</h3>
       ${cmd.examples.map(e => `<pre class="editable">${e}</pre>`).join("")}
     </div>
-
     <div class="card" data-section="commonErrors">
       <h3>Common Errors</h3>
       <ul class="editable">${cmd.commonErrors.map(e => `<li>${e}</li>`).join("")}</ul>
     </div>
-
     <div class="card" data-section="tips">
       <h3>Tips</h3>
       <ul class="editable">${cmd.tips.map(e => `<li>${e}</li>`).join("")}</ul>
     </div>
-
     <div class="card" data-section="related">
-      <h3>Related Commands</h3>
+      <h3>Related</h3>
       <p>${cmd.related.map(r => `<span class="related" data-name="${r}">${r}</span>`).join(", ")}</p>
-    </div>
-
-    <div class="card" data-section="images">
-      <h3>Images</h3>
-      ${cmd.images.length ? cmd.images.map(i => `<img src="${i}">`).join("") : "<p>None</p>"}
     </div>
   `;
 
@@ -120,69 +160,71 @@ function showDetails(cmd) {
     };
   });
 
-  detailDiv.scrollTo({ top: 0, behavior: "smooth" });
-  addSingleEditButton(cmd);
+  detailDiv.scrollTop = 0;
 }
 
-function addSingleEditButton(cmd) {
-  const existing = document.getElementById("page-edit-btn");
-  if (existing) existing.remove();
+editBtn.onclick = () => {
+  if (!currentCommand) return;
+  editing = !editing;
+  if (editing) {
+    editBtn.textContent = "Save";
+    resetBtn.style.display = "inline-block";
+    detailDiv.querySelectorAll(".editable").forEach(el => { el.contentEditable = true; el.style.background = "#ffffe0"; });
+  } else {
+    editBtn.textContent = "Edit";
+    detailDiv.querySelectorAll(".card").forEach(card => {
+      const section = card.dataset.section;
+      if (!section) return;
+      if (section === "examples") currentCommand.examples = [...card.querySelectorAll("pre")].map(e=>e.innerText.trim());
+      else if (section === "commonErrors" || section === "tips") currentCommand[section] = [...card.querySelectorAll("li")].map(e=>e.innerText.trim());
+      else {
+        const el = card.querySelector(".editable");
+        if(el) currentCommand[section] = el.innerText.trim();
+      }
+    });
+    saveCommands();
+    renderFiltered();
+    detailDiv.querySelectorAll(".editable").forEach(el=>{el.contentEditable=false; el.style.background="transparent";});
+    resetBtn.style.display = "none";
+  }
+};
 
-  const btn = document.createElement("button");
-  btn.id = "page-edit-btn";
-  btn.textContent = "Edit";
-  document.body.appendChild(btn);
+resetBtn.onclick = () => {
+  if(!currentCommand) return;
+  const original = defaultCommands.find(c=>c.name===currentCommand.name);
+  if(!original) return;
+  Object.keys(original).forEach(k=>currentCommand[k]=structuredClone(original[k]));
+  saveCommands();
+  showDetails(currentCommand);
+  renderFiltered();
+};
 
-  let editing = false;
+addBtn.onclick = () => modal.style.display = "block";
+modalCancel.onclick = () => modal.style.display = "none";
+modalSave.onclick = () => {
+  const name = document.getElementById("new-name").value.trim();
+  if(!name) return alert("Name cannot be empty!");
+  const category = document.getElementById("new-category").value.trim() || "Misc";
+  const description = document.getElementById("new-description").value.trim() || "";
+  const syntax = document.getElementById("new-syntax").value.trim() || "";
+  const examples = document.getElementById("new-examples").value.split(",").map(e=>e.trim()).filter(Boolean);
+  const tips = document.getElementById("new-tips").value.split(",").map(e=>e.trim()).filter(Boolean);
+  const errors = document.getElementById("new-errors").value.split(",").map(e=>e.trim()).filter(Boolean);
+  const related = document.getElementById("new-related").value.split(",").map(e=>e.trim()).filter(Boolean);
 
-  btn.onclick = () => {
-    editing = !editing;
+  const newCmd = {name, category, description, syntax, examples, tips, commonErrors:errors, related, images:[]};
+  commands.push(newCmd);
+  saveCommands();
+  renderCategories();
+  renderFiltered();
+  showDetails(newCmd);
 
-    if (editing) {
-      btn.textContent = "Save";
-      detailDiv.querySelectorAll(".editable").forEach(el => {
-        el.contentEditable = true;
-        el.style.background = "#ffffe0";
-      });
-    } else {
-      btn.textContent = "Edit";
+  modal.style.display = "none";
+  document.querySelectorAll("#add-article-modal input,#add-article-modal textarea").forEach(el=>el.value="");
+};
 
-      detailDiv.querySelectorAll(".card").forEach(card => {
-        const section = card.dataset.section;
-        if (!section) return;
+window.onclick = (e) => { if(e.target===modal) modal.style.display="none"; };
+searchInput.addEventListener("input", renderFiltered);
 
-        if (section === "examples") {
-          cmd.examples = Array.from(card.querySelectorAll("pre")).map(e => e.innerText.trim());
-        } else if (section === "commonErrors" || section === "tips") {
-          cmd[section] = Array.from(card.querySelectorAll("li")).map(e => e.innerText.trim());
-        } else if (section === "images") {
-          cmd.images = Array.from(card.querySelectorAll("img")).map(img => img.src);
-        } else {
-          const el = card.querySelector(".editable");
-          if (el) cmd[section] = el.innerText.trim();
-        }
-      });
-
-      saveCommands();
-
-      detailDiv.querySelectorAll(".editable").forEach(el => {
-        el.contentEditable = false;
-        el.style.background = "transparent";
-      });
-
-      render(commands);
-    }
-  };
-}
-
-searchInput.addEventListener("input", () => {
-  const q = searchInput.value.toLowerCase();
-  const filtered = commands.filter(cmd =>
-    cmd.name.toLowerCase().includes(q) ||
-    cmd.description.toLowerCase().includes(q)
-  );
-  render(filtered, q);
-});
-
-render(commands);
-
+renderCategories();
+renderFiltered();
