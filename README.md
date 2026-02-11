@@ -1,18 +1,18 @@
-# Anything linux
+# Anything linux V2
 
 A linux wikipedia website called Anything linux using HTML, CSS, and JS currently only 3 working commands.
 
 ## How it works
-You can search a command in the searchbar or choose it in the sidebar. You get all sorts of information like Syntax, Examples/ use cases, Common errors, Tips, Related Commands, and images. You can choose to edit it if you find mistakes, which will get saved in localStorage. The only commands available right now are the ls commands, the cd commands, and the pwd command.
+You can search for a command in the searchbar or choose it in the sidebar. You get all sorts of information like Syntax, Examples/ use cases, Common errors, Tips, Related Commands, and images. You can choose to edit it if you find mistakes, which will get saved in localStorage. The only commands available right now are the ls commands, the cd commands, and the pwd command.
+
+Now with new own article creation features and reset changes button and most importantly categories.
 
 ## Possible future improvements
 - More commands
 - More detailed explanations and images
 - Version History
-- Reset edits to default
 - Offline capabilities
 - keyboard shortcuts
-- catagories
 
 
 Images of code & the website itself with a link
